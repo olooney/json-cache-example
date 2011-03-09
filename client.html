@@ -1,0 +1,101 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>json-cache</title>
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.0/jquery.min.js"></script>
+	<script type="text/javascript">
+		function put(id, data, callback) {
+			$.ajax('http://127.0.0.1:8181/' + id + '/', {
+				type: 'POST',
+				data: JSON.stringify(data),
+				contentType: 'text/json',
+				success: function() { if ( callback ) callback(true); },
+				error  : function() { if ( callback ) callback(false); }
+			});
+		}
+		function get(id, callback) {
+			$.ajax('http://127.0.0.1:8181/' + id + '/', {
+				type: 'GET',
+				dataType: 'json',
+				success: function(data) { if ( callback ) callback(data); },
+				error  : function()     { if ( callback ) callback(null); }
+			});
+		}
+
+		
+		// run a simple put/get test
+		put('echo1', { x: 42, items: ['echo', 'echo'], label: 'echo...echo...', note: "This object was created on the client, sent to the server, and later retrieved, using JSON transport for both trips." }, function(success) {
+			if ( success ) {
+				get('echo1', function(data) {
+					$('#echo').html(JSON.stringify(data));
+				});
+			} else {
+				alert('put failed!');
+			}
+		});
+
+		// test forms.
+		$(function() {
+			$('#get-form').submit(function(e) {
+				e.preventDefault();
+				var id = $('#get-id-field').val();
+				get(id, function(data) {
+					if ( console ) console.log(data);
+					$('#echo').html(JSON.stringify(data));
+				});
+			});
+
+			$('#put-form').submit(function(e) {
+				e.preventDefault();
+				var id = $('#put-id-field').val();
+
+				try { 
+					var value = JSON.parse($('#put-value-field').val());
+				} catch (e) {
+					alert('please use valid JSON in the value box.');
+					return;
+				}
+				put(id, value, function(success) { 
+					if ( success ) {
+						alert('success!');
+						$('#get-id-field').val(id);
+					} else {
+						alert('error!');
+					}
+				});
+			});
+		});
+	</script>
+	<style>
+		.box {
+			border: 1px dotted blue; padding: 10px; margin: 10px;
+		}
+	</style>
+</head>
+<body>
+<div id="timestamp" class="box">
+	Timestamp: <script>document.write(new Date());</script>
+</div>
+
+<div id="echo" class="box">
+</div>
+
+<div id="get" class="box">
+Get
+	<form id="get-form" method="POST">
+		ID:<input name="id" id="get-id-field" value="quote1"><br>
+		<button id="get-button" type="submit">Get</button>
+	</form>
+</div>
+
+<div id="put" class="box">
+Put
+	<form id="put-form" method="POST">
+		ID:<input name="id" id="put-id-field" value="pet1"><br>
+		JSON Value:<textarea name="value" id="put-value-field">{ "name": "Sparkles", "species": "Dog", "age": 3 }</textarea><br>
+		<button id="put-button" type="submit">Put</button>
+	</form>
+</div>
+
+</body>
+</html>
